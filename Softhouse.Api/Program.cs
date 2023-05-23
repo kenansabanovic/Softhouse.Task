@@ -32,15 +32,23 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddHttpClient();
 
 builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-}).AddCookie()
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = "Google";
+    })
+    .AddCookie()
     .AddGoogle(options =>
     {
-        options.ClientId = "181918353633-e32hamhejmtcthmfur958537qri6vv6j.apps.googleusercontent.com";
-        options.ClientSecret = "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";
+        options.ClientId = builder.Configuration["Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"];
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 var app = builder.Build();
 
@@ -57,6 +65,11 @@ app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGet("/", () =>
+{
+    return "Welcome to the protected route!";
+}).RequireAuthorization(); // Require authorization for the "/" route
 
 app.MapControllers();
 
