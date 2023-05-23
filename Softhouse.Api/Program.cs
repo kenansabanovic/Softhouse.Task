@@ -14,11 +14,12 @@ builder.Services.AddSwaggerGen();
 //services cors
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", builder =>
+    options.AddDefaultPolicy(builder =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        builder.WithOrigins("http://localhost:3000", "http://localhost:3000/", "https://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // Add this line to allow credentials
     });
 });
 builder.Services.AddScoped(typeof(IJsonPlaceholderService), typeof(JsonPlaceholderService));
@@ -50,7 +51,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors("CorsPolicy");
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
