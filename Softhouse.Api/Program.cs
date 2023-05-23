@@ -1,11 +1,7 @@
 using Softhouse.Application;
 using Softhouse.Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,13 +39,6 @@ builder.Services.AddAuthentication(options =>
         options.ClientSecret = builder.Configuration["Google:ClientSecret"];
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -66,10 +55,31 @@ app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () =>
+app.Map("/auth/google/callback", callbackApp =>
 {
-    return "Welcome to the protected route!";
-}).RequireAuthorization(); // Require authorization for the "/" route
+    callbackApp.Run(async context =>
+    {
+        var authenticateResult = await context.AuthenticateAsync();
+
+        if (authenticateResult.Succeeded)
+        {
+            // Authentication succeeded, perform the desired action.
+            // For example, you can retrieve the user's information and store it in a session or database.
+            var user = authenticateResult.Principal; // Get the authenticated user's information
+            // Store the user information as needed
+
+            // Send a response back to the client indicating successful authentication.
+            context.Response.StatusCode = 200;
+            await context.Response.WriteAsync("Authentication successful");
+        }
+        else
+        {
+            // Authentication failed, handle the error or redirect to an error page.
+            context.Response.StatusCode = 401; // Unauthorized
+            await context.Response.WriteAsync("Authentication failed");
+        }
+    });
+});
 
 app.MapControllers();
 
