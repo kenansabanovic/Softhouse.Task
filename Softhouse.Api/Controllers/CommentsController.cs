@@ -2,13 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Softhouse.Application.Queries;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Softhouse.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class CommentsController : ControllerBase
     {
         private readonly IMediator _mediator;
