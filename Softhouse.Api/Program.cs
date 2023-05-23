@@ -1,11 +1,6 @@
+using Microsoft.AspNetCore.Authentication.Google;
 using Softhouse.Application;
 using Softhouse.Application.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,14 +28,15 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultScheme = "Cookies";
     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-}).AddCookie()
-    .AddGoogle(options =>
-    {
-        options.ClientId = "181918353633-e32hamhejmtcthmfur958537qri6vv6j.apps.googleusercontent.com";
-        options.ClientSecret = "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";
-    });
+})
+.AddCookie("Cookies")
+.AddGoogle(options =>
+{
+    options.ClientId = "181918353633-e32hamhejmtcthmfur958537qri6vv6j.apps.googleusercontent.com";
+    options.ClientSecret = "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";
+});
 
 var app = builder.Build();
 
@@ -50,11 +46,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors("CorsPolicy");
 
 app.UseHttpsRedirection();
 
-app.UseCors("CorsPolicy");
-
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
