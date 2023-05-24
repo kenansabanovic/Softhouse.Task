@@ -21,7 +21,6 @@ namespace Softhouse.Api.Controllers
 
         [HttpGet]
         [Route("all")]
-        [Authorize]
         public async Task<IActionResult> GetComments()
         {
             return Ok(await _mediator.Send(new GetCommentsQuery()));

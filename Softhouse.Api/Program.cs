@@ -27,8 +27,8 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddHttpClient();
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = GoogleDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = "Google";
     })
     .AddGoogle(options =>
     {

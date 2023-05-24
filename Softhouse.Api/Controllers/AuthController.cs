@@ -32,7 +32,7 @@ namespace Softhouse.Api.Controllers
                 }
 
                 var jwtToken = authorizationHeader.Substring("Bearer ".Length);
-                var test = _signInManager.GetExternalAuthenticationSchemesAsync();
+
                 var payload = await GoogleJsonWebSignature.ValidateAsync(jwtToken);
                 var redirectUrl = GoogleCallback();
                 var properties = new AuthenticationProperties
