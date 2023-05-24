@@ -1,8 +1,8 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Softhouse.Api.Dtos;
 using Softhouse.Application.Queries;
 
 namespace Softhouse.Api.Controllers
@@ -28,20 +28,18 @@ namespace Softhouse.Api.Controllers
 
         [HttpGet]
         [Route("updated")]
-        //[Authorize]
         public async Task<IActionResult> GetUpdatedComments()
         {
-            try {
-                string projectDirectory = Directory.GetCurrentDirectory();
+            try
+            {
+                var projectDirectory = Directory.GetCurrentDirectory();
 
-                string filePath = Path.Combine(projectDirectory, "Comments.json");
+                var filePath = Path.Combine(projectDirectory, "Comments.json");
 
-                // Read existing comments from the JSON file
                 var existingComments = ReadCommentsFromJson(filePath);
-                // Serialize the updated comments list to JSON
-                string json = JsonConvert.SerializeObject(existingComments);
 
-                // Save the JSON string to the file
+                var json = JsonConvert.SerializeObject(existingComments);
+
                 System.IO.File.WriteAllText(filePath, json);
                 await Task.Delay(200);
                 return Created("api/mycontroller", existingComments);
@@ -49,8 +47,8 @@ namespace Softhouse.Api.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"An error occurred while saving the comment: {ex.Message}");
-    }
-}
+            }
+        }
 
         [HttpGet]
 
@@ -68,11 +66,11 @@ namespace Softhouse.Api.Controllers
         {
             try
             {
-                string projectDirectory = Directory.GetCurrentDirectory();
+                var projectDirectory = Directory.GetCurrentDirectory();
 
-                string filePath = Path.Combine(projectDirectory, "Comments.json");
+                var filePath = Path.Combine(projectDirectory, "Comments.json");
 
-                string json = JsonConvert.SerializeObject(comments);
+                var json = JsonConvert.SerializeObject(comments);
 
                 System.IO.File.WriteAllText(filePath, json);
                 await Task.Delay(200);
@@ -88,24 +86,15 @@ namespace Softhouse.Api.Controllers
         {
             if (System.IO.File.Exists(filePath))
             {
-                string json = System.IO.File.ReadAllText(filePath);
+                var json = System.IO.File.ReadAllText(filePath);
 
                 var comments = JsonConvert.DeserializeObject<List<CommentDto>>(json);
 
                 return comments;
             }
 
-            // If the file doesn't exist, return an empty list
             return new List<CommentDto>();
         }
     }
 
-    public class CommentDto
-    {
-        public int PostId { get; set; }
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
-        public string Body { get; set; }
-    }
 }
