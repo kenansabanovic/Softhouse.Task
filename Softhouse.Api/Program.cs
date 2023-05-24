@@ -2,38 +2,34 @@ using Softhouse.Application;
 using Softhouse.Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-//services cors
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
+    options.AddPolicy("MyCorsPolicy", builder =>
     {
-        builder.WithOrigins("http://localhost:3000", "http://localhost:3000/", "https://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials(); // Add this line to allow credentials
+        builder.WithOrigins("http://localhost:3000")
+               .AllowAnyMethod()
+               .AllowAnyHeader()
+               .AllowCredentials()
+               .WithExposedHeaders("Authorization");
     });
 });
 builder.Services.AddScoped(typeof(IJsonPlaceholderService), typeof(JsonPlaceholderService));
-
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Application).Assembly));
 builder.Services.AddHttpClient();
-
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "Google";
+        options.DefaultAuthenticateScheme = GoogleDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
     })
-    .AddCookie()
     .AddGoogle(options =>
     {
         options.ClientId = builder.Configuration["Google:ClientId"];
@@ -51,37 +47,29 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseCors();
+app.UseCors("MyCorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.Map("/auth/google/callback", callbackApp =>
+app.MapGet("/auth/google/callback", async callbackApp =>
 {
-    callbackApp.Run(async context =>
+
+    var authenticateResult = await callbackApp.AuthenticateAsync();
+
+    if (authenticateResult.Succeeded)
     {
-        var authenticateResult = await context.AuthenticateAsync();
+        var user = authenticateResult.Principal;
 
-        if (authenticateResult.Succeeded)
-        {
-            // Authentication succeeded, perform the desired action.
-            // For example, you can retrieve the user's information and store it in a session or database.
-            var user = authenticateResult.Principal; // Get the authenticated user's information
-            // Store the user information as needed
-
-            // Send a response back to the client indicating successful authentication.
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync("Authentication successful");
-        }
-        else
-        {
-            // Authentication failed, handle the error or redirect to an error page.
-            context.Response.StatusCode = 401; // Unauthorized
-            await context.Response.WriteAsync("Authentication failed");
-        }
-    });
+        callbackApp.Response.StatusCode = 200;
+        await callbackApp.Response.WriteAsync("Authentication successful");
+    }
+    else
+    {
+        callbackApp.Response.StatusCode = 401;
+        await callbackApp.Response.WriteAsync("Authentication failed");
+    }
 });
-
 app.MapControllers();
 
 app.Run();

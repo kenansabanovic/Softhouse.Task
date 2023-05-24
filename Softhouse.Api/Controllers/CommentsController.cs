@@ -1,14 +1,15 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Softhouse.Application.Queries;
 
 namespace Softhouse.Api.Controllers
 {
-    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [EnableCors("MyCorsPolicy")]
     public class CommentsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -20,12 +21,40 @@ namespace Softhouse.Api.Controllers
 
         [HttpGet]
         [Route("all")]
+        [Authorize]
         public async Task<IActionResult> GetComments()
         {
             return Ok(await _mediator.Send(new GetCommentsQuery()));
         }
 
         [HttpGet]
+        [Route("updated")]
+        //[Authorize]
+        public async Task<IActionResult> GetUpdatedComments()
+        {
+            try {
+                string projectDirectory = Directory.GetCurrentDirectory();
+
+                string filePath = Path.Combine(projectDirectory, "Comments.json");
+
+                // Read existing comments from the JSON file
+                var existingComments = ReadCommentsFromJson(filePath);
+                // Serialize the updated comments list to JSON
+                string json = JsonConvert.SerializeObject(existingComments);
+
+                // Save the JSON string to the file
+                System.IO.File.WriteAllText(filePath, json);
+                await Task.Delay(200);
+                return Created("api/mycontroller", existingComments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while saving the comment: {ex.Message}");
+    }
+}
+
+        [HttpGet]
+
         public async Task<IActionResult> GetCommentByPostId([FromQuery] int postId)
         {
             return Ok(await _mediator.Send(new GetCommentsByPostIdQuery
@@ -36,28 +65,19 @@ namespace Softhouse.Api.Controllers
 
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> CreateComment([FromBody] CommentDto comment)
+        public async Task<IActionResult> CreateComment([FromBody] IList<CommentDto> comments)
         {
             try
             {
                 string projectDirectory = Directory.GetCurrentDirectory();
 
-                // Build the full path to the file
                 string filePath = Path.Combine(projectDirectory, "Comments.json");
 
-                // Read existing comments from the JSON file
-                var existingComments = ReadCommentsFromJson(filePath);
+                string json = JsonConvert.SerializeObject(comments);
 
-                // Add the new comment to the existing list
-                existingComments.Add(comment);
-
-                // Serialize the updated comments list to JSON
-                string json = JsonConvert.SerializeObject(existingComments);
-
-                // Save the JSON string to the file
                 System.IO.File.WriteAllText(filePath, json);
                 await Task.Delay(200);
-                return Created("api/mycontroller", comment);
+                return Created("api/mycontroller", comments);
             }
             catch (Exception ex)
             {
@@ -67,16 +87,12 @@ namespace Softhouse.Api.Controllers
 
         private List<CommentDto> ReadCommentsFromJson(string filePath)
         {
-            // Check if the JSON file exists
             if (System.IO.File.Exists(filePath))
             {
-                // Read the JSON file content
                 string json = System.IO.File.ReadAllText(filePath);
 
-                // Deserialize the JSON into a list of CommentDto objects
                 var comments = JsonConvert.DeserializeObject<List<CommentDto>>(json);
 
-                // Return the list of comments
                 return comments;
             }
 
